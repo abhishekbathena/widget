@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React App</title>
+
+    <link rel="stylesheet" href="Incmg.css">
+    <!-- Ensure correct path -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://crm.zohopublic.com/crm/v2/scripts/zoho-embed.js"></script>
+
+    <script type="text/javascript" src="./lib/ZohoCrmHelper.js"></script>
+    <script type="text/javascript" src="./lib/ZSDK.js"></script>
+    <style>
+        .toaster {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(20px);
+        }
+        
+        .toaster.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+    <script>
+        ZOHO.embeddedApp.on("PageLoad", function(data) {
+            console.log("Page data:", data);
+
+            if (data.Entity === "Leads") {
+                // Check if it's a specific Lead record
+                if (data.EntityId) {
+                    console.log("Lead ID:", data.EntityId);
+
+                    // Fetch detailed information about the Lead
+                    ZOHO.CRM.API.getRecord({
+                        Entity: "Leads",
+                        RecordID: data.EntityId[0],
+                    }).then(function(response) {
+
+                        let LeadData = response.data[0];
+                        let ownerEmail = LeadData.Owner.email;
+                        let subscriberNumber = LeadData.Phone;
+                        console.log(LeadData, ownerEmail, subscriberNumber)
+                        TriggerApi(ownerEmail, subscriberNumber);
+
+                    }).catch(function(error) {
+                        console.error("Error fetching lead details:", error);
+                    });
+                } else {
+                    console.log("Leads module view detected (e.g., list view)");
+                }
+            } else {
+                console.log("Not on a Leads page");
+            }
+        });
+
+        function TriggerApi(ownerEmail, subscriberNumber) {
+            // Make the POST request using the Fetch API
+            fetch(`https://alb-backend.msgkart.com/api/v2/calling/telecalling?apiKey=9816b1696d8c47e290888904dd0db3e1&emailId=${ownerEmail}&call_to=${subscriberNumber}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json()) // Parse the JSON response
+                .then(result => {
+                    console.log('Success:', result);
+
+                    if (result.message === 'Call initiated successfully') {
+                        ZOHO.CRM.UI.Popup.showMessage({
+                            type: "success", // Change type to success
+                            message: "Call initiated successfully", // Customize the message
+                            delay: 1000 // Duration in milliseconds
+                        }).then(function(data) {
+                            console.log("Success popup displayed:", data);
+                        }).catch(function(error) {
+                            console.error("Error displaying success popup:", error);
+                        });
+                    } else {
+                        ZOHO.CRM.UI.Popup.showMessage({
+                            type: "error", // Change type to success
+                            message: result.message, // Customize the message
+                            delay: 1000 // Duration in milliseconds
+                        }).then(function(data) {
+                            console.log("Success popup displayed:", data);
+                        }).catch(function(error) {
+                            console.error("Error displaying success popup:", error);
+                        });
+                    }
+                    ZOHO.CRM.UI.Popup.close()
+                        .then(function(data) {
+                            console.log(data)
+                        })
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+        }
+
+        // Initialize the embedded app
+        ZOHO.embeddedApp.init();
+    </script>
+</head>
+
+<body>
+
+    <div style="display: flex;justify-content: center;align-items: center;">Call Initiating...</div>
+
+
+</body>
+
+</html>

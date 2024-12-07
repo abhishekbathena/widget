@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React App</title>
+
+    <link rel="stylesheet" href="Incmg.css">
+    <!-- Ensure correct path -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://crm.zohopublic.com/crm/v2/scripts/zoho-embed.js"></script>
+
+    <script type="text/javascript" src="./lib/ZohoCrmHelper.js"></script>
+    <script type="text/javascript" src="./lib/ZSDK.js"></script>
+    <script>
+        localStorage.setItem('MobileNum', 'num');
+        localStorage.setItem('Incmgcallnot', 'no');
+        localStorage.setItem('Leadstatus', 'false');
+        let accessToken = "eyJraWQiOiJIWFpUZWlNRWRSeHl4dWtTbUt1MXNTSm9xd1FRSXl6R1NQd3hWNlZQRHZrPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhNTk5OTQ3ZC1iYzVjLTRiNDUtYjkzYy01YTMxOGUyZTIyNDMiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuYXAtc291dGgtMS5hbWF6b25hd3MuY29tXC9hcC1zb3V0aC0xX1JBa256a3FXRCIsInZlcnNpb24iOjIsImNsaWVudF9pZCI6IjdiNjI2NTByMWJra2g0N2dwajgzcWdwNWQ0Iiwib3JpZ2luX2p0aSI6ImZiMWYzYmMxLTA2YzktNDFlNC05MzhjLTg3ZjczNDZjNjM1YiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4gcGhvbmUgb3BlbmlkIHByb2ZpbGUgZW1haWwiLCJhdXRoX3RpbWUiOjE3MzI2OTEwNzEsImV4cCI6MTczMjc3NzQ3MSwiaWF0IjoxNzMyNjkxMDcxLCJqdGkiOiJmMjk1MTZlMC1iNGJlLTQ3NzQtYTRiZC04MjE4MTU3NzI3OTciLCJ1c2VybmFtZSI6ImE1OTk5NDdkLWJjNWMtNGI0NS1iOTNjLTVhMzE4ZTJlMjI0MyJ9.UqEus9aUzAo9cacqHc1iGfNM2P_8T3c0PFlGnSnT2_2ZkDj35TczyC3GI8tj-YaZ60vLHN_AOd06xFKdCg1IvUqCCNxQBtKUv7uj0AjnkxpgcL_xEo6oKkijaHd0Cg5XPhcjdwmVv4ZhcdM2avBDx6hX6csgXI6rEYpQRY1Jaus7paAdFRNM4rlNlvi4zO9o9HNycmWJVxFl9i6DwdVQh2IUBljMJMImZcAcifhyl3nsl6yt6V9LxgWGACAAdnykAgAFBwUjJvdQgX8si8YzJXCL4-fKf9K-M2Ycf7rlslljr_S5RGZWBXOBomCQA_tP5arVebls0cQk8pzYx16pww";
+        const socket = new WebSocket(`wss://464lquf5o3.execute-api.ap-south-1.amazonaws.com/production?apikey=9816b1696d8c47e290888904dd0db3e0&email=sunil.manoor@gmail.com`);
+        socket.onopen = () => console.log("WebSocket connected!");
+        socket.onmessage = (e) => {
+            try {
+                console.log(JSON.parse(e.data), "Received data");
+                let data = JSON.parse(e.data);
+                if (data.notificationType === 'incomingCall') {
+                    localStorage.setItem('MobileNum', data.subscriberId);
+
+                    localStorage.setItem('Incmgcallnot', 'call');
+                }
+
+            } catch (error) {
+                console.error("Error parsing message data:", error);
+            }
+        };
+        socket.onclose = () => {
+            console.log("WebSocket closed, reconnecting...");
+            socket = new WebSocket(`wss://464lquf5o3.execute-api.ap-south-1.amazonaws.com/production?apikey=9816b1696d8c47e290888904dd0db3e0&email=sunil.manoor@gmail.com`);
+        };
+        // Send message function
+        const sendMessage = (message) => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(message));
+            } else {
+                console.error("WebSocket is not open!");
+            }
+        };
+        // Example usage
+        setTimeout(() => sendMessage({
+            message: "Hello WebSocket!"
+        }), 2000);
+
+        const mobileNumber = "123456789"; // Replace with dynamic data
+        setTimeout(() => {
+            document.getElementById('mobile-number').textContent = localStorage.getItem('MobileNum') || mobileNumber;
+        }, 1000)
+
+        function goBack() {
+            console.log("Go back triggered");
+        }
+
+        function minimizeTelephonyWindow() {
+            ZOHO.CRM.UI.Dialer.minimize()
+                .then(function(response) {
+                    if (response) {
+                        console.log("Telephony window maximized:", response);
+                    } else {
+                        console.log("Failed to maximize Telephony window");
+                    }
+                })
+                .catch(function(error) {
+                    console.error("Error maximizing Telephony window:", error);
+                });
+        }
+
+        function openLead() {
+            console.log("Open lead triggered with mobile number:", mobileNumber);
+            localStorage.setItem('Leadstatus', localStorage.getItem('MobileNum'));
+            minimizeTelephonyWindow();
+
+        }
+        ZOHO.embeddedApp.init().then(function() {
+
+            ZOHO.CRM.CONFIG.getCurrentUser()
+                .then(function(data) {
+                    console.log("Current User Info:", data);
+                })
+                .catch(function(error) {
+                    console.error("Error Fetching Current User:", error);
+                });
+
+
+            const originalSetItem = localStorage.setItem;
+            const originalGetItem = localStorage.getItem;
+
+            // Custom wrapper for setItem
+            localStorage.setItem = function(key, value) {
+                if (key === 'Incmgcallnot') {
+                    console.log(`Incmgcall changed to: ${value}`);
+
+                    notifyIncmgcallChange(value);
+                }
+                if (key === 'MobileNum') {
+                    // Notify when Incmgcall is updated
+                    console.log(`MobileNum changed to: ${value}`);
+
+                    document.getElementById('mobile-number').textContent = value;
+                }
+
+                if (key === 'Leadstatus') {
+                    // Notify when Incmgcall is updated
+                    console.log(`MobileNum changed to: ${value}`);
+
+                    // You can trigger any custom logic or callback here
+                    ZOHO.CRM.API.searchRecord({
+                            Entity: "Leads",
+                            Type: "criteria",
+                            Query: `(Phone:equals:${value})`
+                        })
+                        .then(function(searchResponse) {
+                            console.log("Search Response:", searchResponse);
+
+                            if (searchResponse && searchResponse.data && searchResponse.data.length > 0) {
+                                const leadId = searchResponse.data[0].id; // Get the RecordID of the first matching lead
+
+                                // Step 2: Open the lead in Zoho CRM
+                                ZOHO.CRM.UI.Record.open({
+                                    Entity: "Leads",
+                                    RecordID: leadId
+                                });
+                            } else {
+                                console.error("No Leads Found with the specified Email.");
+                            }
+
+                        })
+                        .catch(function(error) {
+                            console.error("Error Searching for Lead:", error);
+                        });
+                }
+                // Call the original setItem method
+                originalSetItem.apply(localStorage, arguments);
+            };
+
+
+            // Custom wrapper for getItem (if you want to intercept reads as well)
+            localStorage.getItem = function(key) {
+                if (key === 'Incmgcallnot') {
+                    console.log(`Incmgcall accessed: ${localStorage[key]}`);
+                }
+                if (key === 'MobileNum') {
+                    console.log(`MobileNum accessed: ${localStorage[key]}`);
+                }
+                if (key === 'Leadstatus') {
+                    console.log(`Leadstatus accessed: ${localStorage[key]}`);
+                }
+
+                return originalGetItem.apply(localStorage, arguments);
+            };
+
+            // Function to notify when the value of Incmgcall changes
+            function notifyIncmgcallChange(value) {
+                // Perform any action when Incmgcall changes
+                if (value === 'call') {
+                    // Example: maximize the telephony window
+                    maximizeTelephonyWindow();
+                }
+                // You could send messages, update UI, or trigger other events
+                console.log(`Incmgcall has been updated: ${value}`);
+            }
+
+            // Example function to maximize the telephony window (as before)
+            function maximizeTelephonyWindow() {
+                ZOHO.CRM.UI.Dialer.maximize()
+                    .then(function(response) {
+                        if (response) {
+                            console.log("Telephony window maximized:", response);
+                        } else {
+                            console.log("Failed to maximize Telephony window");
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error("Error maximizing Telephony window:", error);
+                    });
+            }
+        }).catch(function(error) {
+            console.error("Error Initializing Zoho Embedded App:", error);
+        });
+
+        ZOHO.embeddedApp.init().then(() => {
+            ZOHO.CRM.API.getAllRecords({
+                    Entity: "Leads",
+
+                })
+                .then(response => {
+                    console.log("Leads Data:", response);
+                })
+                .catch(error => {
+                    console.error("Error fetching leads:", error);
+                });
+        }).catch(error => {
+            console.error("Error initializing Zoho embedded app:", error);
+        });
+        ZOHO.embeddedApp.init();
+    </script>
+
+</head>
+
+<body>
+    <div id="main">
+        <div class="container">
+            <div class="call-log">
+                <div class="call-log-name">Incoming Call</div>
+            </div>
+
+            <div class="incmg-call-body">
+                <div class="incmg-call-icon">
+                    <img src="https://s3-alpha-sig.figma.com/img/3698/e596/9115d1d55b251d4b71b1366c2c193e38?Expires=1733702400&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=AlDb2KgWP-wAQ9DhAR1peXMhLcyvxXTQB5W0i~o7JH9NIkFQRzzsA4UFHemE85yP1FxnUPLPxsLly-4mWNoXVmQBDLA74FKaEH6IeUGkwEAYennW8a4Z5G6BtPY3H9e6SbKLjKOsdfsRDUl3bPUDZMXXpqn-DmkuP5S4BfvN65XGuIjrJ9D4aqgX4GVU2KYUe51E9vom6K4RQ-tNtrWI9qB56FwBCK96r7ErtWxrmVKQp4XF049ZNWnnhZ2PlO42AX7v7Zju9VovajjDdWW-ISZYtkEwp9dvOSPju6Ih-cDZXXmpeQ0rtHMmX0DhtaSM51iHw32aUiG80pzf~nmZsQ__"
+                        alt="Animated GIF">
+                    </img>
+                </div>
+                <div class="subscriber-details">
+                    <!-- <div class="flag-style">
+                        <img src="flag.png" alt="Flag" />
+                    </div> -->
+                    <div class="incmg-sub-name">Unknown</div>
+                </div>
+                <div class="incmg-mbl-num">Mobile +<span id="mobile-number"></span></div>
+            </div>
+
+            <div class="open-lead-btn" onclick="openLead()">
+                Open Lead
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

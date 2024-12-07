@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React App</title>
+    <link rel="stylesheet" href="./Widget/build/static/css/main.29cba9e8.css">
+    <!-- Ensure correct path -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://crm.zohopublic.com/crm/v2/scripts/zoho-embed.js"></script>
+
+    <script type="text/javascript" src="./lib/ZohoCrmHelper.js"></script>
+    <script type="text/javascript" src="./lib/ZSDK.js"></script>
+    <script>
+        ZOHO.embeddedApp.on("PageLoad", function(data) {
+
+            if (data.Entity === "Leads") {
+                // Check if it's a specific Lead record
+                if (data.EntityId) {
+                    console.log("Lead ID:", data.EntityId);
+
+                    // Fetch detailed information about the Lead
+                    ZOHO.CRM.API.getRecord({
+                        Entity: "Leads",
+                        RecordID: data.EntityId[0],
+                    }).then(function(response) {
+
+                        let LeadData = response.data[0];
+                        let ownerEmail = LeadData.Owner.email;
+                        let subscriberNumber = LeadData.Phone;
+                        console.log(LeadData, ownerEmail, subscriberNumber)
+                        if (subscriberNumber) {
+                            const waitForStore = setInterval(() => {
+                                if (window.reduxstore) {
+                                    clearInterval(waitForStore); // Stop polling once the store is available
+
+                                    const store = window.reduxstore;
+
+                                    // Dispatch the action to set searchQuery
+                                    store.dispatch({
+                                        type: "counter/setsearchQuery", // Action type must match the one defined in your slice
+                                        payload: subscriberNumber, // The new value for searchQuery
+                                    });
+                                    store.dispatch({
+                                        type: "counter/setopenSearchchat", // Action type must match the one defined in your slice
+                                        payload: '91', // The new value for searchQuery
+                                    });
+
+                                    console.log("Updated Redux State:", store.getState().counter);
+                                } else {
+                                    console.log("Waiting for Redux store to initialize...");
+                                }
+                            }, 100);
+                        } // Poll every 100ms
+                    }).catch(function(error) {
+                        console.error("Error fetching lead details:", error);
+                    });
+                } else {
+                    console.log("Leads module view detected (e.g., list view)");
+                }
+            } else {
+                console.log("Not on a Leads page");
+            }
+        });
+        ZOHO.embeddedApp.init();
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+    <!-- <script src="static/js/runtime-main.<hash>.js"></script> -->
+    <script src="./Widget/build/static/js/main.5abe39e5.js"></script>
+
+    <!-- Optional, if present -->
+
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+{
+    "service": "CRM",
+    "name": "Msgkart widget",
+    "description": "Msgkart widget for Zoho CRM",
+    "version": "1.0",
+    "background": true
+}
